@@ -1,0 +1,105 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cowbelly Badge Generator</title>
+    <style>
+        body {
+            text-align: center;
+            padding: 0;
+            margin: 0;
+            font-family: sans-serif;
+        }
+        #img-watermark {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <form>
+        <div>
+            <h1>Cowbelly Badge Generator</h1>
+            <span>Primary Color: </span>
+            <p>Enter color values in the fomat: r,g,b. Color value ranges from 0 to 255.</p>
+            <input id="primary-color" placeholder="r,g,b" type="text">
+            <span>Secondary Color: </span>
+            <input id="secondary-color" placeholder="r,g,b" type="text">
+            <button id="generate-btn">Preview</button>
+            <button id="download-btn">Download</button>
+            <img id="img-watermark" src="watermark.png">
+        </div>
+    </form>
+    <script>
+        var canvas = document.createElement('canvas');
+        canvas.id = "canvas";
+        var appended = false;
+        var generateBadge = (primaryColor, secondaryColor) => {
+            var watermark = document.getElementById("img-watermark");
+            if (!appended) {
+                document.body.appendChild(canvas);
+                appended = true;
+            }
+            var width = watermark.width;
+            var height = watermark.height;
+            canvas.width = width;
+            canvas.height = height;
+
+            var ctx = canvas.getContext('2d');
+
+            var x = 0;
+            var y = 0;
+            var radius = 60;
+
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+
+            ctx.clip();
+
+            if (primaryColor.length != 3 || secondaryColor.length != 3) {
+                alert('Primary / Secondary colors not specified correctly.');
+                return false;
+            }
+
+            var gradient = ctx.createLinearGradient(0, 0, 0, width);
+            gradient.addColorStop(0, `rgb(${primaryColor[0]}, ${primaryColor[1]}, ${primaryColor[2]})`);
+            gradient.addColorStop(1, `rgb(${secondaryColor[0]}, ${secondaryColor[1]}, ${secondaryColor[2]})`);
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.drawImage(watermark, 0, 0);
+            return true;
+        }
+        var previewButton = document.getElementById("generate-btn");
+        var downloadButton = document.getElementById("download-btn");
+        previewButton.addEventListener('click', (event) => {
+            event.preventDefault();
+            var primaryColor = document.getElementById("primary-color").value.split(",").map(value => value.trim());
+            var secondaryColor = document.getElementById("secondary-color").value.split(",").map(value => value.trim());
+            generateBadge(primaryColor, secondaryColor);
+        });
+        downloadButton.addEventListener('click', (event) => {
+            event.preventDefault();
+            var primaryColor = document.getElementById("primary-color").value.split(",").map(value => value.trim());
+            var secondaryColor = document.getElementById("secondary-color").value.split(",").map(value => value.trim());
+            let result = generateBadge(primaryColor, secondaryColor);
+            if (!result) return;
+            var imageLink = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+            var link = document.createElement('a');
+            link.href = imageLink;
+            link.setAttribute('download', 'badge.png');
+            link.click();
+        });
+    </script>
+</body>
+</html>
