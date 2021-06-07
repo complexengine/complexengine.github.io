@@ -47,6 +47,7 @@
         #canvas-wrapper {
             margin: auto;
             width: 600px;
+            max-width: 100%;
             height: 300px;
             box-sizing: border-box;
             border: 1px solid #FFFFFF;
@@ -79,9 +80,9 @@
         <form id="badge-data-form">
             <div class="container">
                 <span>Primary Color: </span>
-                <input id="primary-color" placeholder="r,g,b" type="text">
+                <input id="primary-color" placeholder="r,g,b / #rrggbb / #rgb" type="text">
                 <span>Secondary Color: </span>
-                <input id="secondary-color" placeholder="r,g,b" type="text">
+                <input id="secondary-color" placeholder="r,g,b / #rrggbb / #rgb" type="text">
             </div>
             <div class="container">
                 <button id="generate-btn">Preview</button>
