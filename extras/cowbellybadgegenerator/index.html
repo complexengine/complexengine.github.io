@@ -33,7 +33,7 @@
             border: 1px solid #FFFFFF;
             cursor: pointer;
         }
-        button:hover {
+        button:hover, button:focus {
             background: #FFFFFF;
             color: #000000;
             transition: color .25s ease, background-color .25s ease, border-color .25s ease;
@@ -53,6 +53,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+        #canvas-preview-message {
+            user-select: none;
         }
         #canvas {
             max-width: 100%;
@@ -88,6 +91,68 @@
         </form>
     </div>
     <script>
+        function parseColor(inputValue) {
+            if (inputValue === '') {
+                return false;
+            } else if (inputValue[0] === '#') {
+                var valueLength = inputValue.length - 1;
+                if ((valueLength !== 3 && valueLength !== 6) || !inputValue.match(/^#(?:[0-9a-fA-F]{3}){1,2}$/)) {
+                    return false;
+                } else {
+                    if (valueLength === 3) {
+                        return [
+                            parseInt(inputValue[1].toString() + inputValue[1].toString(), 16),
+                            parseInt(inputValue[2].toString() + inputValue[2].toString(), 16),
+                            parseInt(inputValue[3].toString() + inputValue[3].toString(), 16)
+                        ];
+                    } else if (valueLength == 6) {
+                        return [
+                            parseInt(inputValue[1].toString() + inputValue[2].toString(), 16),
+                            parseInt(inputValue[3].toString() + inputValue[4].toString(), 16),
+                            parseInt(inputValue[5].toString() + inputValue[6].toString(), 16)
+                        ];
+                    }
+                }
+            } else {
+                var inputValueSplit = inputValue.split(",");
+                var rgb = [];
+                for (var x = 0; x < inputValueSplit.length; x++) {
+                    rgb.push(inputValueSplit[x].trim());
+                }
+                var incorrectValue = false;
+                if (rgb.length != 3) {
+                    incorrectValue = true;
+                }
+
+                for (var i = 0; i < rgb.length; i++) {
+                    if (isNaN(rgb[i])) {
+                        incorrectValue = true;
+                        break;
+                    } else {
+                        var n = parseInt(rgb[i]);
+                        if (n < 0 || n > 255) {
+                            incorrectValue = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (incorrectValue) {
+                    return false;
+                }
+
+                return rgb;
+            }
+        }
+        function parseColors(primaryColorInput, secondaryColorInput) {
+            var primaryColor = parseColor(primaryColorInput);
+            var secondaryColor = parseColor(secondaryColorInput);
+            if (!primaryColor || !secondaryColor) {
+                alert('Primary / Secondary color not specified correctly.');
+                return false;
+            }
+            return [primaryColor, secondaryColor];
+        }
         var canvasWrapper = document.getElementById('canvas-wrapper');
         var canvasPreviewMessage = document.getElementById('canvas-preview-message');
         var canvas = document.createElement('canvas', {
@@ -95,7 +160,7 @@
         });
         canvas.id = "canvas";
         var appended = false;
-        var generateBadge = (primaryColor, secondaryColor) => {
+        function generateBadge(primaryColor, secondaryColor) {
             var watermark = document.getElementById("img-watermark");
             if (!appended) {
                 canvasPreviewMessage.style.display = "none";
@@ -127,27 +192,6 @@
 
             ctx.clip();
 
-            let incorrectValues = false;
-            if (primaryColor.length != 3 || secondaryColor.length != 3) {
-                incorrectValues = true;
-            }
-
-            [primaryColor, secondaryColor].map(
-                color => {
-                    for (let each of color) {
-                        if (isNaN(each)) {
-                            incorrectValues = true;
-                            return false;
-                        }
-                    }
-                }
-            );
-
-            if (incorrectValues) {
-                alert('Primary / Secondary colors not specified correctly.');
-                return;
-            }
-
             var gradient = ctx.createLinearGradient(0, 0, 0, width);
             gradient.addColorStop(0, `rgb(${primaryColor[0]}, ${primaryColor[1]}, ${primaryColor[2]})`);
             gradient.addColorStop(1, `rgb(${secondaryColor[0]}, ${secondaryColor[1]}, ${secondaryColor[2]})`);
@@ -160,17 +204,29 @@
         }
         var previewButton = document.getElementById("generate-btn");
         var downloadButton = document.getElementById("download-btn");
-        previewButton.addEventListener('click', (event) => {
+
+        previewButton.addEventListener('click', function(event) {
             event.preventDefault();
-            var primaryColor = document.getElementById("primary-color").value.split(",").map(value => value.trim());
-            var secondaryColor = document.getElementById("secondary-color").value.split(",").map(value => value.trim());
+
+            var primaryColorInput = document.getElementById("primary-color").value;
+            var secondaryColorInput = document.getElementById("secondary-color").value;
+
+            var parseColorsResult = parseColors(primaryColorInput, secondaryColorInput);
+            if (!parseColorsResult) return;
+            var primaryColor = parseColorsResult[0];
+            var secondaryColor = parseColorsResult[1];
             generateBadge(primaryColor, secondaryColor);
         });
-        downloadButton.addEventListener('click', (event) => {
+        downloadButton.addEventListener('click', function(event) {
             event.preventDefault();
-            var primaryColor = document.getElementById("primary-color").value.split(",").map(value => value.trim());
-            var secondaryColor = document.getElementById("secondary-color").value.split(",").map(value => value.trim());
-            let result = generateBadge(primaryColor, secondaryColor);
+
+            var primaryColorInput = document.getElementById("primary-color").value;
+            var secondaryColorInput = document.getElementById("secondary-color").value;
+
+            var parseColorsResult = parseColors(primaryColorInput, secondaryColorInput);
+            var primaryColor = parseColorsResult[0];
+            var secondaryColor = parseColorsResult[1];
+            var result = generateBadge(primaryColor, secondaryColor);
             if (!result) return;
             var imageLink = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
             var link = document.createElement('a');
