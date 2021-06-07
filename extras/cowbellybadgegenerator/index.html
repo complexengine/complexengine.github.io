@@ -4,40 +4,102 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cowbelly Badge Generator</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Knewave&display=swap" rel="stylesheet">
     <style>
         body {
             text-align: center;
             padding: 0;
             margin: 0;
+            width: 100%;
             font-family: sans-serif;
+            background: linear-gradient(#1589FF,#1F45FC);
+            background-color: #1F45FC;
+            background-repeat: no-repeat;
+            color: #FFFFFF;
+            height: 100%;
+        }
+        input {
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: none;
+            background-color: #FFFFFF;
+        }
+        button {
+            border-radius: 1.625rem;
+            background: transparent;
+            color: #FFFFFF;
+            padding: 5px 10px;
+            border: 1px solid #FFFFFF;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #FFFFFF;
+            color: #000000;
+            transition: color .25s ease, background-color .25s ease, border-color .25s ease;
+        }
+        h1 {
+            font-family: 'Knewave', sans-serif;
         }
         #img-watermark {
             display: none;
         }
+        #canvas-wrapper {
+            margin: auto;
+            width: 600px;
+            height: 300px;
+            box-sizing: border-box;
+            border: 1px solid #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #canvas {
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        #badge-data-form {
+            padding: 25px;
+        }
+        .container {
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
-    <form>
-        <div>
-            <h1>Cowbelly Badge Generator</h1>
-            <p>Enter color values in the fomat: r,g,b. Color value ranges from 0 to 255.</p>
-            <span>Primary Color: </span>
-            <input id="primary-color" placeholder="r,g,b" type="text">
-            <span>Secondary Color: </span>
-            <input id="secondary-color" placeholder="r,g,b" type="text">
-            <button id="generate-btn">Preview</button>
-            <button id="download-btn">Download</button>
-            <img id="img-watermark" src="watermark.png">
+    <div>
+        <h1>Cowbelly Badge Generator</h1>
+        <p>Enter color values in the fomat: <b>r,g,b</b> or <b>#rrggbb</b> or <b>#rgb</b>. RGB Color value ranges from 0 to 255.</p>
+        <div id="canvas-wrapper">
+            <p id="canvas-preview-message">Preview badge will appear here.</p>
         </div>
-    </form>
+        <form id="badge-data-form">
+            <div class="container">
+                <span>Primary Color: </span>
+                <input id="primary-color" placeholder="r,g,b" type="text">
+                <span>Secondary Color: </span>
+                <input id="secondary-color" placeholder="r,g,b" type="text">
+            </div>
+            <div class="container">
+                <button id="generate-btn">Preview</button>
+                <button id="download-btn">Download</button>
+                <img id="img-watermark" src="watermark.png">
+            </div>
+        </form>
+    </div>
     <script>
-        var canvas = document.createElement('canvas');
+        var canvasWrapper = document.getElementById('canvas-wrapper');
+        var canvasPreviewMessage = document.getElementById('canvas-preview-message');
+        var canvas = document.createElement('canvas', {
+
+        });
         canvas.id = "canvas";
         var appended = false;
         var generateBadge = (primaryColor, secondaryColor) => {
             var watermark = document.getElementById("img-watermark");
             if (!appended) {
-                document.body.appendChild(canvas);
+                canvasPreviewMessage.style.display = "none";
+                canvasWrapper.appendChild(canvas);
                 appended = true;
             }
             var width = watermark.width;
@@ -65,9 +127,25 @@
 
             ctx.clip();
 
+            let incorrectValues = false;
             if (primaryColor.length != 3 || secondaryColor.length != 3) {
+                incorrectValues = true;
+            }
+
+            [primaryColor, secondaryColor].map(
+                color => {
+                    for (let each of color) {
+                        if (isNaN(each)) {
+                            incorrectValues = true;
+                            return false;
+                        }
+                    }
+                }
+            );
+
+            if (incorrectValues) {
                 alert('Primary / Secondary colors not specified correctly.');
-                return false;
+                return;
             }
 
             var gradient = ctx.createLinearGradient(0, 0, 0, width);
